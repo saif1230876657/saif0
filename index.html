@@ -1,227 +1,219 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html dir="rtl" lang="ar">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دردشة موبايل</title>
-<style>
-/* Reset & full-screen */
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: 'Segoe UI', sans-serif;
-  background: #ECE5DD;
-  direction: rtl;
-}
-/* Header */
-.header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 56px;
-  background: #075E54;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  z-index: 1000;
-}
-/* Chat area */
-.chat-box {
-  position: absolute;
-  top: 56px;
-  bottom: 56px;
-  left: 0;
-  right: 0;
-  overflow-y: auto;
-  padding: 10px;
-  background: #ECE5DD;
-}
-.message {
-  display: flex;
-  align-items: flex-end;
-  margin: 5px 0;
-}
-.message img {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  cursor: pointer;
-}
-.bubble {
-  max-width: 75%;
-  padding: 10px;
-  border-radius: 7px;
-  margin: 0 5px;
-  word-wrap: break-word;
-}
-.you {
-  background: #dcf8c6;
-  margin-left: auto;
-}
-.other {
-  background: #fff;
-  margin-right: auto;
-}
-.bubble span {
-  color: #000;
-}
-/* Footer/input */
-.footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 56px;
-  background: #f0f0f0;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  z-index: 1000;
-}
-.footer input {
-  flex: 1;
-  height: 36px;
-  border: none;
-  border-radius: 18px;
-  padding: 0 12px;
-  font-size: 16px;
-  margin-right: 8px;
-  outline: none;
-}
-.footer button {
-  border: none;
-  background: #075E54;
-  color: #fff;
-  border-radius: 18px;
-  padding: 8px 16px;
-  font-size: 16px;
-  cursor: pointer;
-}
-/* Popup */
-.popup {
-  position: fixed;
-  bottom: 70px;
-  left: 10px;
-  right: 10px;
-  background: rgba(0,0,0,0.8);
-  color: #fff;
-  padding: 10px;
-  border-radius: 10px;
-  text-align: center;
-  display: none;
-  z-index: 2000;
-}
-.popup button {
-  margin: 5px;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 5px;
-  background: #25D366;
-  color: #fff;
-  cursor: pointer;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sa AI - دردشة ذكاء اصطناعي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #343541;
+      --card: #444654;
+      --text: #d1d5db;
+      --input-bg: #40414f;
+      --primary: #10a37f;
+      --border: #5a5f76;
+      --error: #f56565;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; font-family:'Inter',sans-serif; }
+    body { background:var(--bg); color:var(--text); display:flex; justify-content:center; align-items:flex-start; padding-top:10px; }
+    .container { width:100%; max-width:700px; height:90vh; background:var(--card); border-radius:8px; display:flex; flex-direction:column; overflow:hidden; }
+    .header { padding:0.75rem 1rem; display:flex; align-items:center; gap:0.5rem; background:var(--bg); }
+    .header i.fa-robot { font-size:1.6rem; color:var(--primary); }
+    .header h1 { flex:1; font-size:1.3rem; font-weight:600; display:flex; align-items:center; gap:0.4rem; }
+    .chat-container { flex:1; padding:0.75rem; overflow-y:auto; }
+    .message { margin-bottom:0.75rem; }
+    .message.user { text-align:right; }
+    .message.bot  { text-align:left; }
+    .bubble {
+      display:inline-block; padding:0.6rem 0.8rem; border-radius:12px; line-height:1.4; font-size:0.95rem;
+    }
+    .message.user .bubble { background:var(--input-bg); }
+    .message.bot .bubble  { background:var(--bg); border:1px solid var(--border); }
+    .chat-input { display:flex; padding:0.4rem; background:var(--input-bg); }
+    .chat-input textarea {
+      flex:1; border:none; border-radius:6px; padding:0.6rem; background:var(--card);
+      color:var(--text); resize:none; outline:none; font-size:0.95rem;
+    }
+    .chat-input button {
+      margin-left:0.4rem; width:36px; height:36px; border:none; border-radius:50%;
+      background:var(--primary); color:#fff; font-size:1rem; cursor:pointer;
+    }
+    .chat-input button:hover { opacity:0.9; }
+    .details-link { display:block; margin-top:4px; font-size:0.85rem; color:var(--primary); cursor:pointer; text-decoration:underline; }
+    .details-text { margin-top:4px; font-size:0.9rem; white-space:pre-wrap; }
+    @media (max-width: 400px) {
+      .header { padding:0.5rem; }
+      .chat-input { padding:0.3rem; }
+      .chat-input button { width:32px; height:32px; }
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="header">
+      <i class="fas fa-robot"></i>
+      <h1>مدرس التاريخ <i class="fas fa-cog" style="font-size:1.1rem;color:var(--primary);" title="إعدادات"></i></h1>
+    </div>
+    <div id="chatContainer" class="chat-container"></div>
+    <div id="statusBar" class="status"></div>
+    <div class="chat-input">
+      <textarea id="userInput" rows="1" placeholder="اكتب رسالتك هنا..."></textarea>
+      <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+      <input id="apiKey" type="hidden" value="AIzaSyBUqzhaui0pz0PqhCsVEpQYfOHsCYKtPBk">
+    </div>
+  </div>
 
-<div class="header">دردشة</div>
-<div class="chat-box" id="chatBox"></div>
+  <script>
+    const chatContainer = document.getElementById("chatContainer");
+    const statusBar     = document.getElementById("statusBar");
+    const userInput     = document.getElementById("userInput");
+    const apiKey        = document.getElementById("apiKey").value;
+    let conversationHistory = "";
 
-<div class="footer">
-  <input id="messageInput" type="text" placeholder="اكتب رسالة...">
-  <button onclick="sendMessage()">إرسال</button>
-</div>
+    // رسالة ترحيب صارمة
+    addBot("مرحبًا بك في *مدرس التاريخ*! تعليمات صارمة: ممنوع منعا باتا الخروج من منهج التاريخ للثانوية العامة المصرية.");
 
-<div class="popup" id="privatePopup">
-  <p id="popupText"></p>
-  <button onclick="acceptChat()">قبول</button>
-  <button onclick="declineChat()">رفض</button>
-</div>
+    function addUser(text) {
+      appendMessage("user", text);
+      conversationHistory += `المستخدم: ${text}\n`;
+    }
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    function addBot(text, isCreatorInfo = false) {
+      appendMessage("bot", text, isCreatorInfo);
+      conversationHistory += `مدرس التاريخ: ${text}\n`;
+    }
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCCVZ_jGFy84adXaEkMybmCciiY5VlBO0E",
-  authDomain: "saifzx.firebaseapp.com",
-  databaseURL: "https://saifzx-default-rtdb.firebaseio.com",
-  projectId: "saifzx",
-  storageBucket: "saifzx.appspot.com",
-  messagingSenderId: "901309994427",
-  appId: "1:901309994427:web:4607a8faf50d536117a09e",
-  measurementId: "G-ZZTBNGJCKN"
-};
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+    function appendMessage(sender, fullText, isCreatorInfo = false) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "message " + sender;
 
-let gender = "";
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
 
-// اختيار النوع
-window.selectGender = function(selectedGender){
-  gender = selectedGender;
-  // يمكنك إضافة شاشة اختيار هنا إذا أردت
-};
+      if (isCreatorInfo) {
+        const icon = document.createElement("i");
+        icon.className = "fas fa-user-shield";
+        icon.title = "تم إنشائي بواسطة سيف هاني";
+        icon.style.marginLeft = "6px";
+        icon.style.color = "var(--primary)";
+        bubble.appendChild(icon);
+      }
 
-// إرسال رسالة عامة
-window.sendMessage = function(){
-  const inp = document.getElementById("messageInput");
-  const text = inp.value.trim();
-  if(!text) return;
-  push(ref(db, "messages"), { gender, text });
-  inp.value = "";
-};
+      bubble.appendChild(document.createTextNode(
+        fullText.length > 200 ? fullText.slice(0, 200) + "..." : fullText
+      ));
+      wrapper.appendChild(bubble);
 
-// أيقونات
-function getIcon(g){
-  return g === "male" 
-    ? "https://cdn-icons-png.flaticon.com/512/2922/2922510.png" 
-    : "https://cdn-icons-png.flaticon.com/512/2922/2922561.png";
-}
+      if (sender === "bot" && fullText.length > 200) {
+        const link = document.createElement("span");
+        link.className = "details-link";
+        link.textContent = "مزيد من التفاصيل ▶";
+        link.onclick = () => toggleDetails(link, bubble, fullText);
+        wrapper.appendChild(link);
+      }
 
-const chatBox = document.getElementById("chatBox");
+      const tools = document.createElement("div");
+      tools.style.marginTop = "6px";
+      tools.style.fontSize = "0.9rem";
+      tools.style.cursor = "pointer";
+      tools.style.color = "var(--primary)";
+      tools.style.display = "flex";
+      tools.style.gap = "12px";
 
-// عرض الرسائل العامة
-onChildAdded(ref(db, "messages"), snapshot => {
-  const msg = snapshot.val();
-  const el = document.createElement("div");
-  el.className = 'message';
-  el.innerHTML = `
-    <img src="${getIcon(msg.gender)}" onclick="startPrivateChat('${msg.gender}')">
-    <div class="bubble ${msg.gender===gender?'you':'other'}"><span>${msg.text}</span></div>
-  `;
-  chatBox.appendChild(el);
-  chatBox.scrollTop = chatBox.scrollHeight;
-});
+      const deleteIcon = document.createElement("i");
+      deleteIcon.className = "fas fa-trash-alt";
+      deleteIcon.title = "حذف الرسالة";
+      deleteIcon.onclick = () => wrapper.remove();
+      tools.appendChild(deleteIcon);
 
-// طلب دردشة خاصة
-window.startPrivateChat = function(otherGender){
-  if(otherGender===gender) return;
-  push(ref(db, "privateRequests"), { from: gender, to: otherGender });
-};
+      if (sender === "bot") {
+        const retryIcon = document.createElement("i");
+        retryIcon.className = "fas fa-redo-alt";
+        retryIcon.title = "إعادة السؤال";
+        retryIcon.onclick = () => {
+          const lastUserMsg = conversationHistory
+            .split("\n")
+            .reverse()
+            .find(line => line.startsWith("المستخدم:"))
+            ?.replace("المستخدم: ", "")
+            .trim();
+          if (lastUserMsg) {
+            userInput.value = lastUserMsg;
+            sendMessage();
+          }
+        };
+        tools.appendChild(retryIcon);
+      }
 
-// مراقبة طلبات الدردشة الخاصة
-onChildAdded(ref(db, "privateRequests"), snapshot => {
-  const req = snapshot.val();
-  if(req.to!==gender) return;
-  const pop = document.getElementById("privatePopup");
-  document.getElementById("popupText").innerText = `مستخدم من نوع ${req.from} طلب دردشة خاصة`;
-  pop.style.display = 'block';
-});
+      wrapper.appendChild(tools);
+      chatContainer.appendChild(wrapper);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-// قبول/رفض الدردشة الخاصة
-window.acceptChat = function(){
-  alert('تم قبول الدردشة الخاصة!');
-  document.getElementById("privatePopup").style.display = 'none';
-};
-window.declineChat = function(){
-  alert('تم رفض الدردشة الخاصة');
-  document.getElementById("privatePopup").style.display = 'none';
-};
-</script>
+    function toggleDetails(link, bubble, fullText) {
+      if (link.textContent.includes("▶")) {
+        const details = document.createElement("div");
+        details.className = "details-text";
+        details.textContent = fullText;
+        link.parentNode.insertBefore(details, link.nextSibling);
+        link.textContent = "إلغاء التفاصيل ▼";
+      } else {
+        const details = link.parentNode.querySelector(".details-text");
+        if (details) details.remove();
+        link.textContent = "مزيد من التفاصيل ▶";
+      }
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function setStatus(msg, isError=false) {
+      statusBar.textContent = msg;
+      statusBar.className = isError ? "status error" : "status";
+      if (!isError) setTimeout(()=> statusBar.textContent="", 1500);
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+      addUser(text);
+      userInput.value = "";
+      setStatus("جاري المعالجة...");
+
+      // تعليمات صارمة للرد: ممنوع الخروج من المنهج
+      const forbidden = /خارج المنهج|خروج من منهج التاريخ للثانوية العامة المصرية/i;
+      if (forbidden.test(text)) {
+        setTimeout(() => {
+          addBot("ممنوع منعا باتا الإجابة على أي سؤال خارج منهج التاريخ للثانوية العامة المصرية.\nلأي استفسار آخر، يرجى الدخول على الدردشة العامة.");
+          setStatus("");
+        }, 300);
+        return;
+      }
+
+      try {
+        const prompt = conversationHistory + `مدرس التاريخ:`;
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+          }
+        );
+        const data = await res.json();
+        let reply = (data.candidates?.[0]?.content?.parts?.[0]?.text || "لم أستلم رد.").trim();
+        addBot(reply);
+      } catch {
+        setStatus("خطأ في الاتصال", true);
+      }
+    }
+
+    userInput.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
 </body>
 </html>
