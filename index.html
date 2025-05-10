@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<!DOCTYPE html><html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,8 +21,9 @@
     .header { padding:0.75rem 1rem; display:flex; align-items:center; gap:0.5rem; background:var(--bg); }
     .header i.fa-robot { font-size:1.6rem; color:var(--primary); }
     .header h1 { flex:1; font-size:1.3rem; font-weight:600; display:flex; align-items:center; gap:0.4rem; }
+    .header .clear-chat { font-size:1.2rem; color:var(--error); cursor:pointer; }
     .chat-container { flex:1; padding:0.75rem; overflow-y:auto; }
-    .message { margin-bottom:0.75rem; }
+    .message { margin-bottom:0.75rem; position:relative; }
     .message.user { text-align:right; }
     .message.bot  { text-align:left; }
     .bubble {
@@ -31,6 +31,11 @@
     }
     .message.user .bubble { background:var(--input-bg); }
     .message.bot .bubble  { background:var(--bg); border:1px solid var(--border); }
+    .tools {
+      display:flex; gap:8px; font-size:0.9rem; margin-top:4px;
+      color:var(--primary);
+    }
+    .tools i { cursor:pointer; }
     .chat-input { display:flex; padding:0.4rem; background:var(--input-bg); }
     .chat-input textarea {
       flex:1; border:none; border-radius:6px; padding:0.6rem; background:var(--card);
@@ -41,8 +46,6 @@
       background:var(--primary); color:#fff; font-size:1rem; cursor:pointer;
     }
     .chat-input button:hover { opacity:0.9; }
-    .details-link { display:block; margin-top:4px; font-size:0.85rem; color:var(--primary); cursor:pointer; text-decoration:underline; }
-    .details-text { margin-top:4px; font-size:0.9rem; white-space:pre-wrap; }
     @media (max-width: 400px) {
       .header { padding:0.5rem; }
       .chat-input { padding:0.3rem; }
@@ -55,6 +58,7 @@
     <div class="header">
       <i class="fas fa-robot"></i>
       <h1>مدرس التاريخ <i class="fas fa-cog" style="font-size:1.1rem;color:var(--primary);" title="إعدادات"></i></h1>
+      <i class="fas fa-trash clear-chat" title="مسح الدردشة"></i>
     </div>
     <div id="chatContainer" class="chat-container"></div>
     <div id="statusBar" class="status"></div>
@@ -63,157 +67,110 @@
       <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
       <input id="apiKey" type="hidden" value="AIzaSyBUqzhaui0pz0PqhCsVEpQYfOHsCYKtPBk">
     </div>
-  </div>
-
-  <script>
+  </div>  <script>
     const chatContainer = document.getElementById("chatContainer");
     const statusBar     = document.getElementById("statusBar");
     const userInput     = document.getElementById("userInput");
     const apiKey        = document.getElementById("apiKey").value;
-    let conversationHistory = "";
+    const clearBtn      = document.querySelector('.clear-chat');
+    let conversationHistory = [];
+    let questionCount = 0;
 
-    // رسالة ترحيب صارمة
-    addBot("مرحبًا بك في *مدرس التاريخ*! تعليمات صارمة: ممنوع منعا باتا الخروج من منهج التاريخ للثانوية العامة المصرية.");
+    function loadChat() {
+      const saved = localStorage.getItem('chatHistory');
+      if (saved) {
+        conversationHistory = JSON.parse(saved);
+        conversationHistory.forEach(item => appendMessage(item));
+      } else {
+        addBot("مرحبًا بك في *مدرس التاريخ*! تعليمات صارمة: ممنوع منعا باتا الخروج من منهج التاريخ للثانوية العامة المصرية. وهو مدرس تاريخ مصري ممنوع يجاوب على أي سؤال خارج المنهج أو يتكلم عن جوجل تحت أي ظرف.");
+      }
+      const pending = localStorage.getItem('pendingQuestion');
+      if (pending) {
+        localStorage.removeItem('pendingQuestion');
+        sendBotResponse(pending);
+      }
+    }
+
+    function saveChat() {
+      localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
+    }
+
+    clearBtn.onclick = () => {
+      if (confirm('هل أنت متأكد من مسح كامل الدردشة؟')) {
+        localStorage.removeItem('chatHistory');
+        localStorage.removeItem('pendingQuestion');
+        chatContainer.innerHTML = '';
+        conversationHistory = [];
+      }
+    };
+
+    function appendMessage(item) {
+      const { sender, text, isCreatorInfo } = item;
+      const wrapper = document.createElement("div");
+      wrapper.className = `message ${sender}`;
+      const bubble = document.createElement("div"); bubble.className = "bubble";
+      if (isCreatorInfo) {
+        const icon = document.createElement("i"); icon.className = "fas fa-user-shield";
+        icon.title = "تم إنشائي بواسطة سيف هاني"; icon.style.marginLeft = "6px";
+        icon.style.color = "var(--primary)"; bubble.appendChild(icon);
+      }
+      bubble.appendChild(document.createTextNode(text)); wrapper.appendChild(bubble);
+      const tools = document.createElement("div"); tools.className = "tools";
+      const del = document.createElement("i"); del.className = "fas fa-trash-alt"; del.title = "حذف";
+      del.onclick = () => { wrapper.remove(); conversationHistory = conversationHistory.filter(i=>i!==item); saveChat(); };
+      const retry = document.createElement("i"); retry.className = "fas fa-redo-alt"; retry.title = "إعادة";
+      retry.onclick = () => { userInput.value = item.sender==='user'? item.text: ''; if(item.sender==='user') sendMessage(); };
+      const copy = document.createElement("i"); copy.className = "fas fa-copy"; copy.title = "نسخ";
+      copy.onclick = () => navigator.clipboard.writeText(text);
+      tools.append(del, retry, copy); wrapper.appendChild(tools);
+      chatContainer.appendChild(wrapper); chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
     function addUser(text) {
-      appendMessage("user", text);
-      conversationHistory += `المستخدم: ${text}\n`;
+      const item = { sender:'user', text, isCreatorInfo:false };
+      appendMessage(item); conversationHistory.push(item); saveChat();
+      questionCount++;
+      if (questionCount % 2 === 0) {
+        localStorage.setItem('pendingQuestion', text);
+        window.location.href = "https://www.profitableratecpm.com/is6qkgzcb?key=89b5b2c5540c42aac27c41018a1414d2";
+      }
     }
 
     function addBot(text, isCreatorInfo = false) {
-      appendMessage("bot", text, isCreatorInfo);
-      conversationHistory += `مدرس التاريخ: ${text}\n`;
+      const item = { sender:'bot', text, isCreatorInfo };
+      appendMessage(item); conversationHistory.push(item); saveChat();
     }
 
-    function appendMessage(sender, fullText, isCreatorInfo = false) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "message " + sender;
-
-      const bubble = document.createElement("div");
-      bubble.className = "bubble";
-
-      if (isCreatorInfo) {
-        const icon = document.createElement("i");
-        icon.className = "fas fa-user-shield";
-        icon.title = "تم إنشائي بواسطة سيف هاني";
-        icon.style.marginLeft = "6px";
-        icon.style.color = "var(--primary)";
-        bubble.appendChild(icon);
-      }
-
-      bubble.appendChild(document.createTextNode(
-        fullText.length > 200 ? fullText.slice(0, 200) + "..." : fullText
-      ));
-      wrapper.appendChild(bubble);
-
-      if (sender === "bot" && fullText.length > 200) {
-        const link = document.createElement("span");
-        link.className = "details-link";
-        link.textContent = "مزيد من التفاصيل ▶";
-        link.onclick = () => toggleDetails(link, bubble, fullText);
-        wrapper.appendChild(link);
-      }
-
-      const tools = document.createElement("div");
-      tools.style.marginTop = "6px";
-      tools.style.fontSize = "0.9rem";
-      tools.style.cursor = "pointer";
-      tools.style.color = "var(--primary)";
-      tools.style.display = "flex";
-      tools.style.gap = "12px";
-
-      const deleteIcon = document.createElement("i");
-      deleteIcon.className = "fas fa-trash-alt";
-      deleteIcon.title = "حذف الرسالة";
-      deleteIcon.onclick = () => wrapper.remove();
-      tools.appendChild(deleteIcon);
-
-      if (sender === "bot") {
-        const retryIcon = document.createElement("i");
-        retryIcon.className = "fas fa-redo-alt";
-        retryIcon.title = "إعادة السؤال";
-        retryIcon.onclick = () => {
-          const lastUserMsg = conversationHistory
-            .split("\n")
-            .reverse()
-            .find(line => line.startsWith("المستخدم:"))
-            ?.replace("المستخدم: ", "")
-            .trim();
-          if (lastUserMsg) {
-            userInput.value = lastUserMsg;
-            sendMessage();
-          }
-        };
-        tools.appendChild(retryIcon);
-      }
-
-      wrapper.appendChild(tools);
-      chatContainer.appendChild(wrapper);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    function toggleDetails(link, bubble, fullText) {
-      if (link.textContent.includes("▶")) {
-        const details = document.createElement("div");
-        details.className = "details-text";
-        details.textContent = fullText;
-        link.parentNode.insertBefore(details, link.nextSibling);
-        link.textContent = "إلغاء التفاصيل ▼";
+    function sendBotResponse(text) {
+      if (/مين\s+(اللي|من)\s+(عمله|صنعوه)/i.test(text)) {
+        addBot('تم إنشائي بواسطة سيف هاني', true);
       } else {
-        const details = link.parentNode.querySelector(".details-text");
-        if (details) details.remove();
-        link.textContent = "مزيد من التفاصيل ▶";
+        addBot(text);
       }
-      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
     function setStatus(msg, isError=false) {
-      statusBar.textContent = msg;
-      statusBar.className = isError ? "status error" : "status";
-      if (!isError) setTimeout(()=> statusBar.textContent="", 1500);
+      statusBar.textContent = msg; statusBar.className = isError? 'status error':'status';
+      if (!isError) setTimeout(()=> statusBar.textContent='',1500);
     }
 
     async function sendMessage() {
-      const text = userInput.value.trim();
-      if (!text) return;
-      addUser(text);
-      userInput.value = "";
-      setStatus("جاري المعالجة...");
-
-      // تعليمات صارمة للرد: ممنوع الخروج من المنهج
-      const forbidden = /خارج المنهج|خروج من منهج التاريخ للثانوية العامة المصرية/i;
+      const text = userInput.value.trim(); if(!text) return;
+      addUser(text); userInput.value = ''; setStatus('جاري المعالجة...');
+      const forbidden = /خارج\s+المنهج|جوجل/i;
       if (forbidden.test(text)) {
-        setTimeout(() => {
-          addBot("ممنوع منعا باتا الإجابة على أي سؤال خارج منهج التاريخ للثانوية العامة المصرية.\nلأي استفسار آخر، يرجى الدخول على الدردشة العامة.");
-          setStatus("");
-        }, 300);
+        setTimeout(()=>{ addBot('ممنوع منعا باتا الإجابة على أي سؤال خارج منهج التاريخ أو عن جوجل.', false); setStatus('');},300);
         return;
       }
-
       try {
-        const prompt = conversationHistory + `مدرس التاريخ:`;
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-          }
-        );
-        const data = await res.json();
-        let reply = (data.candidates?.[0]?.content?.parts?.[0]?.text || "لم أستلم رد.").trim();
-        addBot(reply);
-      } catch {
-        setStatus("خطأ في الاتصال", true);
-      }
+        const prompt = conversationHistory.map(i=> i.sender==='user'? `المستخدم: ${i.text}`: `مدرس التاريخ: ${i.text}`).join('\n') + '\nمدرس التاريخ: ';
+        const res= await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+        const data=await res.json(); const reply=data.candidates?.[0]?.content?.parts?.[0]?.text.trim()||'لم أستلم رد.';
+        sendBotResponse(reply);
+      } catch { setStatus('خطأ في الاتصال',true); }
     }
 
-    userInput.addEventListener("keydown", e => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-  </script>
-</body>
+    userInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+    loadChat();
+  </script></body>
 </html>
